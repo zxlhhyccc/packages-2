@@ -1,15 +1,18 @@
+From: Florian Fainelli <florian@openwrt.org>
+Date: Tue, 29 Jul 2008 10:22:38 +0000
+Subject: [PATCH] Do not compile and generate curl tests and docs
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -87,7 +87,7 @@ CLEANFILES = $(VC14_LIBVCXPROJ) $(VC14_S
+@@ -71,7 +71,7 @@ DISTCLEANFILES = buildinfo.txt
  bin_SCRIPTS = curl-config
  
  SUBDIRS = lib docs src scripts
--DIST_SUBDIRS = $(SUBDIRS) tests packages scripts include docs
-+DIST_SUBDIRS = $(SUBDIRS) packages include
+-DIST_SUBDIRS = $(SUBDIRS) tests projects include docs
++DIST_SUBDIRS = $(SUBDIRS) projects include
  
  pkgconfigdir = $(libdir)/pkgconfig
  pkgconfig_DATA = libcurl.pc
-@@ -196,12 +196,9 @@ cygwinbin:
+@@ -141,12 +141,9 @@ check-docs:
  if BUILD_DOCS
  install-data-hook:
  	(cd include && $(MAKE) install)

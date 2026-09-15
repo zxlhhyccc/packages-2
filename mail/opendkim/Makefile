@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opendkim
 PKG_VERSION:=2.10.3
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
@@ -17,6 +17,7 @@ PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE LICENSE.Sendmail
+PKG_CPE_ID:=cpe:/a:opendkim:opendkim
 
 PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=openssl

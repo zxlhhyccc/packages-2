@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2006-2012 OpenWrt.org
-#               2014-2020 Noah Meyerhans <frodo@morgul.net>
+#               2014-2024 Noah Meyerhans <frodo@morgul.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
-PKG_VERSION:=9.18.24
+PKG_VERSION:=9.20.26
 PKG_RELEASE:=1
 USERID:=bind=57:bind=57
 
@@ -22,10 +22,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:= \
 	https://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION) \
 	https://ftp.isc.org/isc/bind9/$(PKG_VERSION)
-PKG_HASH:=709d73023c9115ddad3bab65b6c8c79a590196d0d114f5d0ca2533dbd52ddf66
-
-PKG_FIXUP:=autoreconf
-PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
+PKG_HASH:=55248def0f870c4c46b3de72978ea972615131516663188a4564dca1d20bf350
 
 PKG_INSTALL:=1
 PKG_BUILD_FLAGS:=no-mips16
@@ -34,10 +31,14 @@ PKG_BUILD_PARALLEL:=1
 PKG_CONFIG_DEPENDS := \
 	CONFIG_BIND_LIBJSON \
 	CONFIG_BIND_LIBXML2 \
+	CONFIG_BIND_JEMALLOC \
 	CONFIG_BIND_ENABLE_DOH \
 	CONFIG_BIND_ENABLE_GSSAPI
 
-PKG_BUILD_DEPENDS += BIND_LIBXML2:libxml2 BIND_LIBJSON:libjson-c
+PKG_BUILD_DEPENDS += \
+	BIND_LIBXML2:libxml2 \
+	BIND_LIBJSON:libjson-c \
+	BIND_JEMALLOC:libjemalloc
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -48,6 +49,7 @@ define Package/bind/Default
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=+bind-libs +@OPENSSL_WITH_EC
+  EXTRA_DEPENDS:=bind-libs (=$(PKG_VERSION)-r$(PKG_RELEASE))
   TITLE:=bind
   URL:=https://www.isc.org/software/bind
   SUBMENU:=IP Addresses and Names
@@ -61,11 +63,13 @@ define Package/bind-libs
 	+libpthread \
 	+libatomic \
 	+libuv \
+	+liburcu \
 	+BIND_ENABLE_DOH:libnghttp2 \
 	+BIND_ENABLE_GSSAPI:krb5-libs \
 	+BIND_ENABLE_GSSAPI:libcomerr \
 	+BIND_LIBXML2:libxml2 \
-	+BIND_LIBJSON:libjson-c
+	+BIND_LIBJSON:libjson-c \
+	+BIND_JEMALLOC:libjemalloc
   TITLE:=bind shared libraries
   URL:=https://www.isc.org/software/bind
 endef
@@ -73,7 +77,9 @@ endef
 define Package/bind-server
   $(call Package/bind/Default)
   TITLE+= DNS server
-  DEPENDS+= +libcap
+  DEPENDS+= +libcap \
+	+bind-rndc
+  EXTRA_DEPENDS+=, bind-rndc (=$(PKG_VERSION)-r$(PKG_RELEASE))
 endef
 
 define Package/bind-server/config
@@ -83,6 +89,7 @@ endef
 define Package/bind-server-filter-aaaa
   $(call Package/bind-server)
   DEPENDS:=bind-server
+  EXTRA_DEPENDS:=bind-server (=$(PKG_VERSION)-r$(PKG_RELEASE))
   TITLE+= filter AAAA plugin
 endef
 
@@ -94,7 +101,7 @@ endef
 define Package/bind-tools
   $(call Package/bind/Default)
   TITLE+= administration tools (all)
-	DEPENDS:= \
+  DEPENDS:= \
 	+bind-check \
 	+bind-dig \
 	+bind-nslookup \
@@ -102,6 +109,14 @@ define Package/bind-tools
 	+bind-host \
 	+bind-rndc \
 	+bind-ddns-confgen
+  EXTRA_DEPENDS:= \
+	bind-check (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-dig (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-nslookup (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-dnssec (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-host (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-rndc (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-ddns-confgen (=$(PKG_VERSION)-r$(PKG_RELEASE))
 endef
 
 define Package/bind-rndc
@@ -141,15 +156,13 @@ define Package/bind-ddns-confgen
   TITLE+= administration tools (ddns-confgen and tsig-keygen only)
 endef
 
-export BUILD_CC="$(TARGET_CC)"
-
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed \
+	-Wl,-rpath-link,$(PKG_BUILD_DIR)/lib/ns/.libs
 
 CONFIGURE_ARGS += \
 	--disable-geoip \
 	--with-openssl="$(STAGING_DIR)/usr" \
 	--without-lmdb \
-	--enable-epoll \
 	--without-readline \
 	--sysconfdir=/etc/bind
 
@@ -170,6 +183,14 @@ else
 		--with-libxml2=no
 endif
 
+ifdef CONFIG_BIND_JEMALLOC
+	CONFIGURE_ARGS += \
+		--with-jemalloc=yes
+else
+	CONFIGURE_ARGS += \
+		--without-jemalloc
+endif
+
 ifdef CONFIG_BIND_ENABLE_DOH
 	CONFIGURE_ARGS += \
 		--enable-doh
@@ -186,19 +207,6 @@ else
 		--without-gssapi
 endif
 
-CONFIGURE_VARS += \
-	BUILD_CC="$(TARGET_CC)" \
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR)/lib/dns \
-		BUILD_CC="$(HOSTCC)" \
-		CC="$(HOSTCC)" \
-		CFLAGS="-O2" \
-		LIBS="" \
-		gen
-	$(call Build/Compile/Default)
-endef
-
 define Package/bind-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib
@@ -208,30 +216,14 @@ define Package/bind-server/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/bind
-	$(CP) \
-		./files/bind/db.0 \
-		./files/bind/db.127 \
-		./files/bind/db.255 \
-		./files/bind/db.local \
-		./files/bind/db.root \
-		./files/bind/bind.keys \
-		$(1)/etc/bind/
-	sed -e '1s/ broadcast / empty rfc1918 /' \
-		< ./files/bind/db.0 \
-		> $(1)/etc/bind/db.empty
-	$(CP) ./files/bind/named.conf.example $(1)/etc/bind/named.conf
+	$(INSTALL_DATA) ./files/bind/db.root $(1)/etc/bind
+	$(INSTALL_DATA) ./files/bind/named.conf $(1)/etc/bind
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/named.init $(1)/etc/init.d/named
-	find $(1)/etc/bind/ -name ".svn" | xargs rm -rf
 endef
 
 define Package/bind-server/conffiles
-/etc/bind/db.0
-/etc/bind/db.127
-/etc/bind/db.255
-/etc/bind/db.local
-/etc/bind/db.root
-/etc/bind/named.conf
+/etc/bind
 endef
 
 define Package/bind-server-filter-aaaa/install

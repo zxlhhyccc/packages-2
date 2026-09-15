@@ -1,14 +1,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=re2
-PKG_VERSION:=2023-02-01
-PKG_RELEASE:=3
+PKG_VERSION:=2025.11.05
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/google/re2/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=cbce8b7803e856827201a132862e41af386e7afd9cc6d9a9bc7a4fa4d8ddbdde
+PKG_SOURCE_URL:=https://github.com/google/re2/archive/refs/tags/
+PKG_SOURCE_URL_FILE:=2025-11-05.tar.gz
+PKG_HASH:=87f6029d2f6de8aa023654240a03ada90e876ce9a4676e258dd01ea4c26ffd67
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-2025-11-05
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
@@ -20,7 +22,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/re2
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libstdcpp
+  DEPENDS:=+libstdcpp +abseil-cpp
   TITLE:=RE2 - C++ regular expression library
   URL:=https://github.com/google/re2
   ABI_VERSION:=10
@@ -46,7 +48,7 @@ endef
 
 define Package/re2/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libre2.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libre2.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,re2))

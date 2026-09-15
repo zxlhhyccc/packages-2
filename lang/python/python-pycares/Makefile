@@ -2,17 +2,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pycares
-PKG_VERSION:=4.4.0
+PKG_VERSION:=5.0.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=pycares
-PKG_HASH:=f47579d508f2f56eddd16ce72045782ad3b1b3b678098699e2b6a1b30733e1c2
+PKG_HASH:=5a3c249c830432631439815f9a818463416f2a8cbdb1e988e78757de9ae75081
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Fabian Lipken <dynasticorpheus@gmail.com>
 
-PKG_BUILD_DEPENDS:=libffi/host python-cffi/host  # cffi>=1.5.0
+PKG_BUILD_DEPENDS:=libffi/host python-cffi/host  # cffi>=2.0.0b1 (py3.14)
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

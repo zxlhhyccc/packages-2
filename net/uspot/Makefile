@@ -8,26 +8,28 @@ PKG_MAINTAINER:=Thibaut VARÈNE <hacks@slashdirt.org>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/f00b4r0/uspot.git
-PKG_SOURCE_DATE:=2024-05-03
-PKG_SOURCE_VERSION:=92d3356d3fb3ae36199dbd494b5d9a9ae1a9db07
-PKG_MIRROR_HASH:=ae6bb9245945cf207d91b1aa36fb0db2b03333343714c1cacd046dd2c7ee3c79
+PKG_SOURCE_DATE:=2026-06-30
+PKG_SOURCE_VERSION:=87080bfa0dae7843c6be8383f619e444928bc92a
+PKG_MIRROR_HASH:=43b04e98232fe7eafd550faf9a8999771ac07295bcb4be0e1148b610612cbbe8
 
 CMAKE_SOURCE_SUBDIR:=src
+PKG_BUILD_DEPENDS:=bpf-headers
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+include $(INCLUDE_DIR)/bpf.mk
 
 define Package/uspot
   SUBMENU:=Captive Portals
   SECTION:=net
   CATEGORY:=Network
   TITLE:=uspot hotspot daemon
-  EXTRA_DEPENDS:=ucode (>= 2023-11-07)
   DEPENDS:=+conntrack \
 	   +libblobmsg-json +liblucihttp-ucode +libradcli +libubox +libubus +libuci \
 	   +uspotfilter \
-	   +ucode +ucode-mod-log +ucode-mod-math +ucode-mod-nl80211 +ucode-mod-rtnl +uhttpd-mod-ucode +ucode-mod-uloop
-
+	   +ucode +ucode-mod-log +ucode-mod-math +ucode-mod-nl80211 +ucode-mod-rtnl +uhttpd-mod-ucode +ucode-mod-uloop \
+	   +ucode-mod-bpf +ucode-mod-struct +kmod-sched-core +kmod-sched-bpf $(BPF_DEPENDS)
+  EXTRA_DEPENDS:=ucode (>=2023.11.07)
 endef
 
 define Package/uspot/description
@@ -62,8 +64,8 @@ define Package/uspotfilter
   SECTION:=net
   CATEGORY:=Network
   TITLE:=uspot firewall interface
-  EXTRA_DEPENDS:=ucode (>= 2023-11-07)
-  DEPENDS:=+conntrack +nftables-json +ucode +ucode-mod-rtnl +ucode-mod-uloop
+  DEPENDS:=+conntrack +nftables-json +ucode +ucode-mod-rtnl +ucode-mod-uloop +ucode-mod-log
+  EXTRA_DEPENDS:=ucode (>=2023.11.07)
   PKGARCH:=all
 endef
 
@@ -72,11 +74,17 @@ define Package/uspotfilter/description
   It is compatible with firewall4.
 endef
 
+define Build/Compile
+	$(call CompileBPF,$(PKG_BUILD_DIR)/src/uspot-bpf.c)
+	$(call Build/Compile/Default,)
+endef
+
 define Package/uspot/install
-	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/share $(1)/usr/lib/ucode $(1)/etc/init.d $(1)/etc/config
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/share $(1)/usr/lib/ucode $(1)/etc/init.d $(1)/etc/config $(1)/lib/bpf
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/radius-client $(1)/usr/bin/radius-client
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/uspot-das $(1)/usr/bin/uspot-das
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/libuam.so $(1)/usr/lib/ucode/uam.so
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/uspot-bpf.o $(1)/lib/bpf/uspot.o
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/files/etc/config/uspot $(1)/etc/config/uspot
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/etc/init.d/uspot $(1)/etc/init.d/uspot
 	$(CP) $(PKG_BUILD_DIR)/files/usr/bin $(1)/usr/

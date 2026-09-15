@@ -9,15 +9,13 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/nls.mk
 
 PKG_NAME:=curl
-PKG_VERSION:=8.8.0
+PKG_VERSION:=8.21.0
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/curl/curl/releases/download/curl-$(subst .,_,$(PKG_VERSION))/ \
-	https://dl.uxnr.de/mirror/curl/ \
-	https://curl.askapache.com/download/ \
 	https://curl.se/download/
-PKG_HASH:=0f58bb95fc330c8a46eeb3df5701b0d90c9d9bfcc42bd1cd08791d12551d4400
+PKG_HASH:=aa1b66a70eace83dc624508745646c08ae561de512ab403adffb93ac87fc72e6
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -46,6 +44,7 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_LIBCURL_FTP \
   CONFIG_LIBCURL_GOPHER \
   CONFIG_LIBCURL_HTTP \
+  CONFIG_LIBCURL_WEBSOCKETS \
   CONFIG_LIBCURL_IMAP \
   CONFIG_LIBCURL_LDAP \
   CONFIG_LIBCURL_LDAPS \
@@ -57,12 +56,13 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_LIBCURL_SMTP \
   CONFIG_LIBCURL_TELNET \
   CONFIG_LIBCURL_TFTP \
-  CONFIG_LIBCURL_NGHTTP2 \
-  CONFIG_LIBCURL_NGHTTP3 \
-  CONFIG_LIBCURL_NGTCP2 \
+  CONFIG_LIBCURL_HTTP2 \
+  CONFIG_LIBCURL_HTTP3 \
   \
   CONFIG_LIBCURL_COOKIES \
   CONFIG_LIBCURL_CRYPTO_AUTH \
+  CONFIG_LIBCURL_HTTP_AUTH \
+  CONFIG_LIBCURL_KERBEROS_AUTH \
   CONFIG_LIBCURL_LIBCURL_OPTION \
   CONFIG_LIBCURL_PROXY \
   CONFIG_LIBCURL_THREADED_RESOLVER \
@@ -81,7 +81,7 @@ define Package/curl/Default
   SECTION:=net
   CATEGORY:=Network
   URL:=https://curl.se/
-  MAINTAINER:=Aleksey Vasilenko <aleksey.vasilenko@gmail.com>
+  MAINTAINER:=
 endef
 
 define Package/curl
@@ -97,7 +97,8 @@ define Package/libcurl
   CATEGORY:=Libraries
   DEPENDS:= +LIBCURL_WOLFSSL:libwolfssl +LIBCURL_OPENSSL:libopenssl +LIBCURL_GNUTLS:libgnutls +LIBCURL_MBEDTLS:libmbedtls
   DEPENDS += +LIBCURL_ZLIB:zlib +LIBCURL_ZSTD:libzstd +LIBCURL_THREADED_RESOLVER:libpthread +LIBCURL_LDAP:libopenldap
-  DEPENDS += +LIBCURL_LIBIDN2:libidn2 +LIBCURL_SSH2:libssh2 +LIBCURL_NGHTTP2:libnghttp2 +LIBCURL_NGHTTP3:libnghttp3 +LIBCURL_NGTCP2:libngtcp2 +ca-bundle
+  DEPENDS += +LIBCURL_LIBIDN2:libidn2 +LIBCURL_SSH2:libssh2 +LIBCURL_HTTP2:libnghttp2 +LIBCURL_HTTP3:libnghttp3 +LIBCURL_HTTP3:libngtcp2 +ca-bundle
+  DEPENDS += +LIBCURL_KERBEROS_AUTH:krb5-libs
   TITLE:=A client-side URL transfer library
   MENU:=1
   ABI_VERSION:=4
@@ -114,10 +115,11 @@ TARGET_LDFLAGS += -Wl,--gc-sections
 CONFIGURE_ARGS += \
 	--disable-debug \
 	--disable-docs \
+	--disable-manual \
 	--disable-ares \
+	--disable-ipfs \
 	--enable-shared \
 	--enable-static \
-	--disable-manual \
 	--without-nss \
 	--without-librtmp \
 	--without-ca-path \
@@ -137,9 +139,9 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_LIBCURL_SSH2),--with-libssh2="$(STAGING_DIR)/usr",--without-libssh2) \
 	$(if $(CONFIG_LIBCURL_ZLIB),--with-zlib="$(STAGING_DIR)/usr",--without-zlib) \
 	$(if $(CONFIG_LIBCURL_ZSTD),--with-zstd="$(STAGING_DIR)/usr",--without-zstd) \
-	$(if $(CONFIG_LIBCURL_NGHTTP2),--with-nghttp2="$(STAGING_DIR)/usr",--without-nghttp2) \
-	$(if $(CONFIG_LIBCURL_NGHTTP3),--with-nghttp3="$(STAGING_DIR)/usr",--without-nghttp3) \
-	$(if $(CONFIG_LIBCURL_NGTCP2),--with-ngtcp2="$(STAGING_DIR)/usr",--without-ngtcp2) \
+	$(if $(CONFIG_LIBCURL_HTTP2),--with-nghttp2="$(STAGING_DIR)/usr",--without-nghttp2) \
+	$(if $(CONFIG_LIBCURL_HTTP3),--with-nghttp3="$(STAGING_DIR)/usr" --with-ngtcp2="$(STAGING_DIR)/usr",--without-nghttp3 --without-ngtcp2) \
+	$(if $(CONFIG_LIBCURL_KERBEROS_AUTH),--with-gssapi="$(STAGING_DIR)/usr",--without-gssapi) \
 	\
 	$(call autoconf_bool,CONFIG_LIBCURL_DICT,dict) \
 	$(call autoconf_bool,CONFIG_LIBCURL_FILE,file) \
@@ -155,9 +157,11 @@ CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_LIBCURL_SMTP,smtp) \
 	$(call autoconf_bool,CONFIG_LIBCURL_TELNET,telnet) \
 	$(call autoconf_bool,CONFIG_LIBCURL_TFTP,tftp) \
+	$(call autoconf_bool,CONFIG_LIBCURL_WEBSOCKETS,websockets) \
 	\
 	$(call autoconf_bool,CONFIG_LIBCURL_COOKIES,cookies) \
 	$(call autoconf_bool,CONFIG_LIBCURL_CRYPTO_AUTH,crypto-auth) \
+	$(call autoconf_bool,CONFIG_LIBCURL_HTTP_AUTH,http-auth) \
 	$(call autoconf_bool,CONFIG_LIBCURL_LIBCURL_OPTION,libcurl-option) \
 	$(call autoconf_bool,CONFIG_LIBCURL_PROXY,proxy) \
 	$(call autoconf_bool,CONFIG_LIBCURL_THREADED_RESOLVER,threaded-resolver) \

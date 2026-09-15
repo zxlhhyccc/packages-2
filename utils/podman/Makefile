@@ -1,16 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=podman
-PKG_VERSION:=5.0.0
-PKG_RELEASE:=1
+PKG_VERSION:=5.8.4
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/containers/podman/archive/v$(PKG_VERSION)
-PKG_HASH:=818db636955a1eeec4dcb586d18783ab86a8afd07e3f4adaf25920b3697316c9
+PKG_SOURCE_URL:=https://github.com/podman-container-tools/podman/archive/v$(PKG_VERSION)
+PKG_HASH:=be01c20923ed7642a5ad039f83252e3b7d09f0e3431d01284a5beff6c123671c
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
+PKG_CPE_ID:=cpe:/a:podman_project:podman
 
 PKG_BUILD_DEPENDS:=golang/host protobuf/host btrfs-progs
 PKG_BUILD_PARALLEL:=1
@@ -39,7 +40,9 @@ define Package/podman
   CATEGORY:=Utilities
   TITLE:=Podman
   URL:=https://podman.io
-  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +libgpgme +libseccomp +nsenter +zoneinfo-simple +kmod-veth +slirp4netns +netavark +aardvark-dns +catatonit +crun +PODMAN_SELINUX_SUPPORT:libselinux
+  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +libgpgme +libseccomp +nsenter \
+	+zoneinfo-simple +kmod-veth +slirp4netns +netavark +aardvark-dns \
+	+catatonit +crun +PODMAN_SELINUX_SUPPORT:libselinux
 endef
 
 define Package/podman/description
@@ -64,42 +67,20 @@ define Package/podman/conffiles
 /etc/containers/networks/podman.json
 endef
 
+GO_PKG_TAGS:=seccomp exclude_graphdriver_devicemapper apparmor
 ifdef CONFIG_PODMAN_SELINUX_SUPPORT
-  GO_PKG_TAGS=seccomp,exclude_graphdriver_devicemapper,selinux,apparmor
-else
-  GO_PKG_TAGS=seccomp,exclude_graphdriver_devicemapper,apparmor
+  GO_PKG_TAGS+= selinux
 endif
 
 MAKE_VARS += \
-	GO_INSTALL_BIN_PATH="$(strip $(GO_PKG_INSTALL_BIN_PATH))" \
-	BUILD_DIR="$(PKG_BUILD_DIR)" \
-	GO_BUILD_DIR="$(GO_PKG_BUILD_DIR)" \
-	GO_BUILD_BIN_DIR="$(GO_PKG_BUILD_BIN_DIR)" \
-	GO_BUILD_DEPENDS_PATH="$(GO_PKG_BUILD_DEPENDS_PATH)" \
-	GO_BUILD_DEPENDS_SRC="$(GO_PKG_BUILD_DEPENDS_SRC)" \
-	GOOS="$(GO_OS)" \
-	GOARCH="$(GO_ARCH)" \
-	CC="$(TARGET_CC)" \
-	CXX="$(TARGET_CXX)" \
-	CGO_CFLAGS="$(filter-out $(GO_CFLAGS_TO_REMOVE),$(TARGET_CFLAGS))" \
-	CGO_CPPFLAGS="$(TARGET_CPPFLAGS)" \
-	CGO_CXXFLAGS="$(filter-out $(GO_CFLAGS_TO_REMOVE),$(TARGET_CXXFLAGS))" \
-	CGO_LDFLAGS="$(TARGET_LDFLAGS)" \
-	GOPATH="$(GO_PKG_BUILD_DIR)" \
-	GOCACHE="$(GO_BUILD_CACHE_DIR)" \
-	GOMODCACHE="$(GO_MOD_CACHE_DIR)" \
-	GOFLAGS="$(GO_PKG_GCFLAGS)" \
-	GO_PKG_CFLAGS="$(GO_PKG_CFLAGS)" \
-	CGO_ENABLED=1 \
-	GOENV=off \
+	$(GO_GENERAL_BUILD_CONFIG_VARS) \
+	$(GO_PKG_BUILD_CONFIG_VARS) \
+	$(GO_PKG_VARS) \
 	PREFIX=/usr \
 	LIBEXECDIR=/usr/lib \
 	LIBEXECPODMAN=/usr/lib/podman \
-	SHAREDIR_CONTAINERS=/usr/share/containers \
-	ETCDIR=/etc \
 	TMPFILESDIR=/var/run/podman \
-	BUILDTAGS="$(GO_PKG_TAGS)" \
-	EXTRA_LDFLAGS="$(GO_PKG_LDFLAGS)"
+	BUILDTAGS="$(GO_PKG_TAGS)"
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
@@ -119,14 +100,16 @@ define Package/podman/install
 	$(INSTALL_DIR) $(1)/etc/containers
 	$(INSTALL_DATA) $(DL_DIR)/default-policy.json-362f70b056 $(1)/etc/containers/policy.json
 	$(INSTALL_DATA) $(DL_DIR)/registries.fedora-da9a9c8778 $(1)/etc/containers/registries.conf
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/vendor/github.com/containers/storage/storage.conf $(1)/etc/containers/storage.conf
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/vendor/go.podman.io/storage/storage.conf $(1)/etc/containers/storage.conf
 	$(INSTALL_DATA) ./files/containers.conf $(1)/etc/containers/containers.conf
 	$(INSTALL_DIR) $(1)/etc/containers/networks
 	$(INSTALL_CONF) ./files/podman.json $(1)/etc/containers/networks
 	$(INSTALL_DIR) $(1)/usr/share/containers
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/vendor/github.com/containers/common/pkg/seccomp/seccomp.json $(1)/usr/share/containers/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/vendor/go.podman.io/common/pkg/seccomp/seccomp.json $(1)/usr/share/containers/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/podman.init $(1)/etc/init.d/podman
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/podman.defaults $(1)/etc/uci-defaults/90-podman
 	$(SED) 's/driver = \"\"/driver = \"overlay\"/g' $(1)/etc/containers/storage.conf
 endef
 

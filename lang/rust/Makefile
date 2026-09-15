@@ -5,17 +5,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rust
-PKG_VERSION:=1.78.0
+PKG_VERSION:=1.96.0
 PKG_RELEASE:=2
 
-PKG_SOURCE:=rustc-$(PKG_VERSION)-src.tar.gz
+PKG_SOURCE:=rustc-$(PKG_VERSION)-src.tar.xz
 PKG_SOURCE_URL:=https://static.rust-lang.org/dist/
-PKG_HASH:=ff544823a5cb27f2738128577f1e7e00ee8f4c83f2a348781ae4fc355e91d5a9
+PKG_HASH:=b99ce16cdf0ecfc761b585ac84d131b46733465a02f8ecd0ff2de9713c62ee09
 HOST_BUILD_DIR:=$(BUILD_DIR)/host/rustc-$(PKG_VERSION)-src
 
 PKG_MAINTAINER:=Luca Barbato <lu_zero@luminem.org>
 PKG_LICENSE:=Apache-2.0 MIT
 PKG_LICENSE_FILES:=LICENSE-APACHE LICENSE-MIT
+PKG_CPE_ID:=cpe:/a:rust-lang:rust
 
 PKG_HOST_ONLY:=1
 PKG_BUILD_FLAGS:=no-mips16
@@ -75,7 +76,7 @@ HOST_CONFIGURE_ARGS = \
 	--release-channel=stable \
 	--enable-cargo-native-static \
 	--bootstrap-cache-path=$(DL_DIR)/rustc \
-	--set=llvm.download-ci-llvm=true \
+	--set=llvm.download-ci-llvm=false \
 	$(TARGET_CONFIGURE_ARGS)
 
 define Host/Uninstall
@@ -88,10 +89,10 @@ define Host/Compile
 	$(RUST_SCCACHE_VARS) \
 	CARGO_HOME=$(CARGO_HOME) \
 	TARGET_CFLAGS="$(TARGET_CFLAGS)" \
+	$(if $(RUSTC_TARGET_RUSTFLAGS),$(RUSTC_TARGET_CARGO_RUSTFLAGS)="$(RUSTC_TARGET_RUSTFLAGS)") \
 	$(PYTHON) $(HOST_BUILD_DIR)/x.py \
 		--build-dir $(HOST_BUILD_DIR)/build \
-		--config $(HOST_BUILD_DIR)/config.toml \
-		dist build-manifest cargo llvm-tools rustc rust-std rust-src
+		dist build-manifest rustc rust-std cargo llvm-tools rust-src
 endef
 
 define Host/Install

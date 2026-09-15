@@ -9,11 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libesmtp
 PKG_VERSION:=1.1.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 PKG_LICENSE:=LGPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libesmtp_project:libesmtp
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/libesmtp/libESMTP/tar.gz/v$(PKG_VERSION)?
@@ -28,7 +29,7 @@ define Package/libesmtp
   CATEGORY:=Libraries
   TITLE:=A Library for Posting Electronic Mail
   URL:=https://libesmtp.github.io/
-  DEPENDS:=+libpthread +libopenssl
+  DEPENDS:=+libopenssl
 endef
 
 define Build/InstallDev

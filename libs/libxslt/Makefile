@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxslt
-PKG_VERSION:=1.1.39
+PKG_VERSION:=1.1.42
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/libxslt/$(basename $(PKG_VERSION))
-PKG_HASH:=2a20ad621148339b0759c4d4e96719362dee64c9a096dbba625ba053846349f0
+PKG_HASH:=85ca62cac0d41fc77d3f6033da9df6fd73d20ea2fc18b0a3609ffb4110e1baeb
 
 PKG_MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
 PKG_LICENSE:=MIT
@@ -33,7 +33,7 @@ define Package/libxslt
   CATEGORY:=Libraries
   DEPENDS:=+libxml2 $(ICONV_DEPENDS)
   TITLE:=Gnome XSLT library
-  URL:=http://xmlsoft.org/XSLT/
+  URL:=https://gitlab.gnome.org/GNOME/libxslt
 endef
 
 define Package/libxslt/description
@@ -45,7 +45,7 @@ define Package/libexslt
   CATEGORY:=Libraries
   DEPENDS:=+libxslt
   TITLE:=Gnome XSLT library Extension
-  URL:=http://xmlsoft.org/XSLT/EXSLT/
+  URL:=https://gitlab.gnome.org/GNOME/libxslt
 endef
 
 define Package/libexslt/description
@@ -57,7 +57,7 @@ define Package/xsltproc
   CATEGORY:=Utilities
   DEPENDS:=+libxslt +PACKAGE_xsltproc:libexslt
   TITLE:=Gnome XSLT xsltproc Utility
-  URL:=http://xmlsoft.org/XSLT/
+  URL:=https://gitlab.gnome.org/GNOME/libxslt
 endef
 
 define Package/xsltproc/description
@@ -132,7 +132,7 @@ define Build/InstallDev/Exslt
 endef
 
 define Build/InstallDev
-	 $(if $(CONFIG_PACKAGE_libxslt),$(call Build/InstallDev/Xslt,$(1),$(2)))
+	 $(call Build/InstallDev/Xslt,$(1),$(2))
 	 $(if $(CONFIG_PACKAGE_libexslt),$(call Build/InstallDev/Exslt,$(1),$(2)))
 endef
 

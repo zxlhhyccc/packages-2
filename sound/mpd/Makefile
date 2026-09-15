@@ -6,14 +6,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.23.15
+PKG_VERSION:=0.23.17
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.musicpd.org/download/mpd/0.23
-PKG_HASH:=550132239ad1acf82ccf8905b56cc13dc2c81a4489b96fba7731b3049907661a
+PKG_HASH:=a86f4fe811695743b08db82a9f1a840b8918bb4f46b06f48aa1d8d1b5386dff2
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
@@ -22,7 +22,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_BUILD_PATENTED \
 	CONFIG_IPV6 \
 
-PKG_BUILD_FLAGS:=no-mips16 no-lto
+PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -101,6 +101,7 @@ define Package/mpd-avahi-service/conffiles
 endef
 
 MESON_ARGS += \
+	-Db_lto=true \
 	-Ddocumentation=disabled \
 	-Dhtml_manual=false \
 	-Dmanpages=false \
@@ -117,7 +118,6 @@ MESON_ARGS += \
 	-Dtcp=true \
 	-Dipv6=$(if $(CONFIG_IPV6),en,dis)abled \
 	-Dlocal_socket=true \
-	-Ddsd=false \
 	-Ddatabase=true \
 	-Dlibmpdclient=enabled \
 	-Dneighbor=false \
@@ -180,6 +180,7 @@ ifeq ($(BUILD_VARIANT),full)
   MESON_ARGS += \
 	-Dupnp=npupnp \
 	-Dmms=enabled \
+	-Ddsd=true \
 	-Dsoundcloud=enabled \
 	-Dffmpeg=enabled \
 	-Dmad=$(if $(CONFIG_BUILD_PATENTED),dis,en)abled \
@@ -206,6 +207,7 @@ ifeq ($(BUILD_VARIANT),mini)
   MESON_ARGS += \
 	-Dupnp=disabled \
 	-Dmms=disabled \
+	-Ddsd=false \
 	-Dsoundcloud=disabled \
 	-Dffmpeg=disabled \
 	-Dmad=enabled \

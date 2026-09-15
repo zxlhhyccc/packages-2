@@ -8,12 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tinc
-PKG_VERSION:=1.1pre18
+PKG_VERSION:=1.1_pre18
+PKG_REALVERSION:=1.1pre18
 PKG_RELEASE:=4
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://tinc-vpn.org/packages
 PKG_HASH:=2757ddc62cf64b411f569db2fa85c25ec846c0db110023f6befb33691f078986
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_REALVERSION)
 
 PKG_MAINTAINER:=Erwan Mas <erwan@mas.nom.fr>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -34,7 +36,7 @@ define Package/tinc
   CATEGORY:=Network
   DEPENDS:=+kmod-tun +liblzo +libopenssl +librt +zlib
   TITLE:=VPN tunneling daemon
-  URL:=http://www.tinc-vpn.org/
+  URL:=https://tinc-vpn.org/
   SUBMENU:=VPN
 endef
 

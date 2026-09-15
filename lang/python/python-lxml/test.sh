@@ -1,6 +1,6 @@
 #!/bin/sh
 
-[ "$1" = "python3-lxml" ] || exit 0
+[ "$1" = python3-lxml ] || exit 0
 
 EXP_VER="$2"
 

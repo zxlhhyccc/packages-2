@@ -3,17 +3,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apparmor
-PKG_VERSION:=3.0.3
-PKG_RELEASE:=6
+PKG_VERSION:=3.0.13
+PKG_RELEASE:=3
 
-PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://gitlab.com/apparmor/apparmor/-/archive/v$(PKG_VERSION)
-PKG_HASH:=66db49cc578e6a85ba2fc350507ad1741d2534cdfc7ed71a81261f84d6e2262d
-PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://gitlab.com/apparmor/apparmor
+PKG_MIRROR_HASH:=0f47852e1559607c2e62919a781d2f8226acbdb0df00b025be7ebc79e5c9bc8b
 
+PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
+PKG_CPE_ID:=cpe:/a:apparmor:apparmor
 
 PKG_BUILD_DEPENDS:=swig/host python-setuptools-scm/host
 
@@ -154,9 +155,16 @@ define Build/Install
 		$(MAKE_FLAGS) DESTDIR="$(PKG_INSTALL_DIR)-profiles" install
 endef
 
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include/sys $(1)/usr/lib $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)-libapparmor/usr/include/sys/*.h $(1)/usr/include/sys/
+	$(CP) $(PKG_INSTALL_DIR)-libapparmor/usr/lib/libapparmor.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)-libapparmor/usr/lib/pkgconfig/libapparmor.pc $(1)/usr/lib/pkgconfig/
+endef
+
 define Package/libapparmor/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)-libapparmor/usr/lib/libapparmor.so.1 $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)-libapparmor/usr/lib/libapparmor.so.1 $(1)/usr/lib/
 	$(LN) libapparmor.so.1 $(1)/usr/lib/libapparmor.so
 endef
 
@@ -168,7 +176,7 @@ define Package/python3-apparmor/install
 		$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/LibAppArmor-$(PKG_VERSION)-py$(PYTHON3_VERSION).egg-info
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-libapparmor/usr/lib/python$(PYTHON3_VERSION)/site-packages/LibAppArmor/*.py \
 		$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/LibAppArmor
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)-libapparmor/usr/lib/python$(PYTHON3_VERSION)/site-packages/LibAppArmor/*.so \
+	$(CP) $(PKG_INSTALL_DIR)-libapparmor/usr/lib/python$(PYTHON3_VERSION)/site-packages/LibAppArmor/*.so \
 		$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/LibAppArmor/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-libapparmor/usr/lib/python$(PYTHON3_VERSION)/site-packages/LibAppArmor-$(PKG_VERSION)-py$(PYTHON3_VERSION).egg-info/* \
 		$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/LibAppArmor-$(PKG_VERSION)-py$(PYTHON3_VERSION).egg-info/

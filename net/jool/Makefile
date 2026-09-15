@@ -8,20 +8,22 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=jool
-PKG_VERSION:=4.1.12
+PKG_VERSION:=4.1.15
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:jool:jool
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/NICMx/Jool.git
-PKG_SOURCE_VERSION:=8d2edffe40fc9ebcb558e88e66662ee813e00b5c
-PKG_MIRROR_HASH:=5f4729aeca0a5895b15a9d77ec52b4c9efdffeb25926e3a7eff36ffa6a9b1a14
+PKG_SOURCE_VERSION:=b2ef294103bbcf8eccfaee97dcb41721995e2b0a
+PKG_MIRROR_HASH:=e21d41a87dc419472356aefcdea681014311a3c93c4e1b1d6bbd8d2cd1fc4e97
 
 PKG_BUILD_DIR=$(KERNEL_BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=!USE_GLIBC:argp-standalone
+PKG_FLAGS:=nonshared
 
 PKG_FIXUP:=autoreconf
 
@@ -83,8 +85,7 @@ define KernelPackage/jool-netfilter
 	DEPENDS:= \
 		@IPV6 \
 		+kmod-crypto-md5 \
-		+kmod-nf-conntrack \
-		+kmod-nf-conntrack6
+		+kmod-nf-conntrack
 	FILES:= \
 		$(PKG_BUILD_DIR)/src/mod/common/jool_common.$(LINUX_KMOD_SUFFIX) \
 		$(PKG_BUILD_DIR)/src/mod/nat64/jool.$(LINUX_KMOD_SUFFIX) \
@@ -102,7 +103,7 @@ endef
 define Package/jool-tools-netfilter
   $(call Package/jool/Default)
   TITLE:=Jool userspace control programs
-  DEPENDS:=+libnl +kmod-jool-netfilter
+  DEPENDS:=+libnl +libnl-genl +kmod-jool-netfilter +ethtool
 endef
 
 define Package/jool-tools-netfilter/description
@@ -134,6 +135,9 @@ define Package/jool-tools-netfilter/install
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/jool.init $(1)/etc/init.d/jool
+
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/net
+	$(INSTALL_BIN) ./files/jool-disable-fraglist-gro.sh $(1)/etc/hotplug.d/net/90-jool-disable-fraglist-gro.sh
 
 	$(INSTALL_DIR) $(1)/etc/jool
 	$(INSTALL_CONF) ./files/jool-nat64.conf.json $(1)/etc/jool/jool-nat64.conf.json

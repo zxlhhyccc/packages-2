@@ -1,15 +1,15 @@
+# SPDX-License-Identifier: MIT
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=https-dns-proxy
-PKG_VERSION:=2023.11.19
-PKG_RELEASE:=r1
+PKG_VERSION:=2026.05.06
+PKG_RELEASE:=1
+PKG_CPE_ID:=cpe:/a:mossdef:https-dns-proxy
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/aarond10/https_dns_proxy/
-PKG_SOURCE_DATE:=$(subst(.,-,$(PKG_VERSION)))
-PKG_SOURCE_RELEASE:=$(subst(r,,$(PKG_RELEASE)))
-PKG_SOURCE_VERSION:=489c57efd46983e688579974a2ab7aeaa7df8d83
-PKG_MIRROR_HASH:=804d857efe79437c7f859fb450aca0d6962b4e80b7354060eb399574083438e4
+PKG_MIRROR_HASH:=345f14e0a05e032754cea440f5e8798c6896cf5bc7cc12b3c7ed1c8d34e4daad
+PKG_SOURCE_VERSION:=0ba0525fa7c10115cc7c92e99621bfe484ae96e7
 
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=MIT
@@ -18,23 +18,31 @@ PKG_LICENSE_FILES:=LICENSE
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-CMAKE_OPTIONS += -DCLANG_TIDY_EXE= -DGIT_VERSION=$(PKG_SOURCE_DATE)-$(PKG_SOURCE_RELEASE)
+TARGET_CFLAGS += $(FPIC)
+TARGET_LDFLAGS += -Wl,--gc-sections
+CMAKE_OPTIONS += -DCLANG_TIDY_EXE= -DSW_VERSION=$(PKG_VERSION)-r$(PKG_RELEASE)
 
 define Package/https-dns-proxy
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=DNS Over HTTPS Proxy
-	URL:=https://docs.openwrt.melmac.net/https-dns-proxy/
-	DEPENDS:=+libcares +libcurl +libev +ca-bundle +jsonfilter +resolveip
-	DEPENDS+=+!BUSYBOX_DEFAULT_GREP:grep
-	DEPENDS+=+!BUSYBOX_DEFAULT_SED:sed
+	URL:=https://github.com/mossdef-org/https-dns-proxy/
+	DEPENDS:= \
+		+libcares \
+		+libcurl \
+		+libev \
+		+ca-bundle \
+		+jsonfilter \
+		+resolveip \
+		+!BUSYBOX_DEFAULT_GREP:grep \
+		+!BUSYBOX_DEFAULT_SED:sed
 	CONFLICTS:=https_dns_proxy
 endef
 
 define Package/https-dns-proxy/description
 Light-weight DNS-over-HTTPS, non-caching translation proxy for the RFC 8484 DoH standard.
-It receives regular (UDP) DNS requests and resolves them via DoH resolver.
-Please see https://docs.openwrt.melmac.net/https-dns-proxy/ for more information.
+It receives regular, unencrypted (UDP) DNS requests and resolves them via DoH resolver.
+Please see https://docs.mossdef.org/https-dns-proxy/ for more information.
 endef
 
 define Package/https-dns-proxy/conffiles
@@ -46,11 +54,13 @@ define Package/https-dns-proxy/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/https_dns_proxy $(1)/usr/sbin/https-dns-proxy
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/https-dns-proxy $(1)/etc/init.d/https-dns-proxy
-	$(SED) "s|^\(readonly PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/https-dns-proxy
+	$(SED) "s|^\(readonly PKG_VERSION\).*|\1='$(PKG_VERSION)-r$(PKG_RELEASE)'|" $(1)/etc/init.d/https-dns-proxy
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/etc/config/https-dns-proxy $(1)/etc/config/https-dns-proxy
 	$(INSTALL_DIR) $(1)/etc/uci-defaults/
 	$(INSTALL_BIN) ./files/etc/uci-defaults/50-https-dns-proxy-migrate-options.sh $(1)/etc/uci-defaults/50-https-dns-proxy-migrate-options.sh
+	$(INSTALL_DIR) $(1)/usr/share/nftables.d/ruleset-post
+	$(INSTALL_DATA) ./files/usr/share/nftables.d/ruleset-post/.placeholder $(1)/usr/share/nftables.d/ruleset-post/.placeholder
 endef
 
 $(eval $(call BuildPackage,https-dns-proxy))

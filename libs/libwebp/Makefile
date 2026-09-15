@@ -1,16 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwebp
-PKG_VERSION:=1.4.0
+PKG_VERSION:=1.6.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://storage.googleapis.com/downloads.webmproject.org/releases/webp
-PKG_HASH:=61f873ec69e3be1b99535634340d5bde750b2e4447caa1db9f61be3fd49ab1e5
+PKG_HASH:=e4ab7009bf0629fd11982d4c2aa83964cf244cffba7347ecd39019a9e38c4564
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:webmproject:libwebp
 
 CMAKE_INSTALL:=1
 PKG_BUILD_FLAGS:=lto

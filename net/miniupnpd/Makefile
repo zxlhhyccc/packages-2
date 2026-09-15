@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpd
-PKG_VERSION:=2.3.6
-PKG_RELEASE:=1
+PKG_VERSION:=2.3.9
+PKG_RELEASE:=3
 
-PKG_SOURCE_URL:=https://miniupnp.tuxfamily.org/files
+PKG_SOURCE_URL:=https://github.com/miniupnp/miniupnp/releases/download/miniupnpd_$(subst .,_,$(PKG_VERSION))
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=11ca7bf4d4ba6c6ba12c70c3041807f516f4d9f6b6697bea04e837626b9d679c
+PKG_HASH:=66cb3c3d697ab2bb3a61d3c48628166d6ba328d7c2dbeb95898fdf2a3202af7b
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:miniupnp_project:miniupnpd
@@ -74,18 +74,23 @@ define Build/Prepare
 endef
 
 CONFIGURE_ARGS = \
-	$(if $(CONFIG_IPV6),--ipv6) \
+	--disable-fork \
+	--disable-pppconn \
+	--firewall=$(BUILD_VARIANT) \
 	--igd2 \
+	$(if $(CONFIG_IPV6),--ipv6) \
 	--leasefile \
 	--portinuse \
-	--firewall=$(BUILD_VARIANT) \
-	--disable-fork
+	--regex \
+	--vendorcfg
 
 TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 ifeq ($(BUILD_VARIANT),iptables)
+ifeq ($(filter $(ARCH),mips mipsel),)
 	TARGET_CFLAGS += -flto
+endif
 endif
 
 define Package/miniupnpd/install/Default

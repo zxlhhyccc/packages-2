@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=crun
-PKG_VERSION:=1.14.1
+PKG_VERSION:=1.28
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/containers/crun/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=eb25a87da0b528bb09dc6a231a0d28eb4f287fc864d62bf9a46cc48e36010935
+PKG_HASH:=90284c7f097f8ee72a6447978c263e1b1355727c2f2ca0ac667e6d57788f46f5
 
 PKG_BUILD_DEPENDS:=argp-standalone
 PKG_BUILD_PARALLEL:=1
@@ -25,20 +25,20 @@ define Package/crun
   CATEGORY:=Utilities
   TITLE:=crun
   URL:=https://github.com/containers/crun
-  DEPENDS:=@!arc +libseccomp +libcap +libgcrypt
+  DEPENDS:=@!arc +libseccomp +libcap +libgcrypt +libjson-c
 endef
 
 define Package/crun/description
   A fast and low-memory footprint OCI Container Runtime fully written in C.
 endef
 
-LIBOCISPEC_COMMIT:=3d168261f250477061fe0eb3648bf998c70c6519
+LIBOCISPEC_COMMIT:=8034d0ecd27f646ba3ffae5ff24db234ce062825
 
 define Download/libocispec
   PROTO:=git
   URL:=https://github.com/containers/libocispec.git
-  VERSION:=$(LIBOCISPEC_COMMIT)
-  MIRROR_HASH:=4e308ff6a40e38aee184abef9156fa92b1ea9f978e277be2ed7b12f9e06f717f
+  SOURCE_VERSION:=$(LIBOCISPEC_COMMIT)
+  MIRROR_HASH:=ac132910952d2d5c6bf3c8b891cced10d1c6113d50c78779a6b8d21851dc908a
   FILE:=libocispec-$(LIBOCISPEC_COMMIT).tar.xz
   SUBDIR:=libocispec
 endef
@@ -46,7 +46,6 @@ $(eval $(call Download,libocispec))
 
 CONFIGURE_ARGS+= \
 	--disable-systemd \
-	--enable-embedded-yajl \
 	--enable-caps \
 	--enable-dl \
 	--enable-seccomp \

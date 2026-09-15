@@ -23,6 +23,7 @@ proto_openconnect_init_config() {
 	proto_config_add_string "vpn_protocol"
 	proto_config_add_boolean "pfs"
 	proto_config_add_boolean "no_dtls"
+	proto_config_add_boolean "no_external_auth"
 	proto_config_add_string "interface"
 	proto_config_add_string "username"
 	proto_config_add_string "serverhash"
@@ -37,6 +38,7 @@ proto_openconnect_init_config() {
 	proto_config_add_string "csd_wrapper"
 	proto_config_add_string "proxy"
 	proto_config_add_array 'form_entry:regex("[^:]+:[^=]+=.*")'
+	proto_config_add_string "script"
 	no_device=1
 	available=1
 }
@@ -57,6 +59,7 @@ proto_openconnect_setup() {
 		juniper \
 		vpn_protocol \
 		mtu \
+		no_external_auth \
 		no_dtls \
 		os \
 		password \
@@ -73,6 +76,7 @@ proto_openconnect_setup() {
 		token_secret \
 		usergroup \
 		username \
+		script \
 
 	ifname="vpn-$config"
 
@@ -84,7 +88,7 @@ proto_openconnect_setup() {
 		[ -n $uri ] && server=$(echo $uri | awk -F[/:] '{print $4}')
 
 		logger -t "openconnect" "adding host dependency for $server at $config"
-		while resolveip -t 10 "$server" > "$tmpfile" && [ "$trials" -gt 0 ]; do
+		while ! resolveip -t 10 "$server" > "$tmpfile" && [ "$trials" -gt 0 ]; do
 			sleep 5
 			trials=$((trials - 1))
 		done
@@ -101,9 +105,11 @@ proto_openconnect_setup() {
 	[ -n "$port" ] && port=":$port"
 	[ -z "$uri" ] && uri="$server$port"
 
-	append_args "$uri" -i "$ifname" --non-inter --syslog --script /lib/netifd/vpnc-script
+	append_args "$uri" -i "$ifname" --non-inter --syslog
+	[ -n "$script" ] && append_args --script "$script"
 	[ "$pfs" = 1 ] && append_args --pfs
 	[ "$no_dtls" = 1 ] && append_args --no-dtls
+	[ "$no_external_auth" = 1 ] && append_args "--no-external-auth"
 	[ -n "$mtu" ] && append_args --mtu "$mtu"
 
 	# migrate to standard config files
@@ -143,8 +149,10 @@ proto_openconnect_setup() {
 		}
 		[ "$token_mode" = "script" ] && {
 			$token_script >> "$pwfile" 2> /dev/null || {
-				logger -t openconenct "Cannot get password from script '$token_script'"
+				logger -t openconnect "Cannot get password from script '$token_script'"
+				sleep 5
 				proto_setup_failed "$config"
+				exit 1
 			}
 		}
 		append_args --passwd-on-stdin

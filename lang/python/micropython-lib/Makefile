@@ -8,15 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=micropython-lib
+PKG_VERSION:=1.28.0
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/micropython/micropython-lib.git
-PKG_SOURCE_VERSION:=d8e163bb5f3ef45e71e145c27bc4f207beaad70f
-PKG_SOURCE_DATE:=20231031
-PKG_MIRROR_HASH:=311651a719ae645d3e40c3c8ebf706fa2e964ac1455d84bee73606ec6d7c13a2
+PKG_SOURCE:=micropython-lib-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/micropython/micropython-lib/archive/refs/tags/v$(PKG_VERSION)
+PKG_HASH:=244f1ac1623674444a2092983e22c0a1f6ac89ae116f93bc0f6bc05c77dd38bc
 
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT Python-2.0.1
 PKG_LICENSE_FILES:=LICENSE
 
